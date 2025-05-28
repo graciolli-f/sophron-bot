@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global CSS Variables and Base Styles */
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  
+  color-scheme: dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+}
+
+/* DaisyUI Theme Overrides - Neutral Chat Bubble Colors */
+:root, 
+[data-theme="dark"],
+html[data-theme="dark"] {
+  /* User messages - neutral blue-gray instead of purple */
+  --p: 210 11% 45% !important; /* primary - muted blue-gray for user messages */
+  --pc: 210 11% 98% !important; /* primary content - high contrast text */
+  
+  /* Bot messages - neutral warm gray instead of pink */
+  --s: 30 5% 45% !important; /* secondary - muted warm gray for bot messages */
+  --sc: 30 5% 98% !important; /* secondary content - high contrast text */
+  
+  /* Accent colors for other UI elements */
+  --a: 220 10% 30% !important; /* accent - very dark gray */
+  --ac: 220 10% 98% !important; /* accent content */
+}
+
+/* Direct Chat Bubble Color Overrides */
+.chat-bubble-primary {
+  background-color: hsl(210 11% 45%) !important; /* Force neutral blue-gray for user */
+  color: hsl(210 11% 98%) !important;
+}
+
+.chat-bubble-secondary {
+  background-color: hsl(30 5% 45%) !important; /* Force neutral warm gray for bot */
+  color: hsl(30 5% 98%) !important;
+}
+
+/* Base Layout Styles */
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+#root {
+  width: 100%;
+  height: 100vh; /* Full height for three-column layout */
+}
+
+/* Custom Scrollbar Styling */
+.chat-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+} 
