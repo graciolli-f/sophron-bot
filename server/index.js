@@ -25,7 +25,7 @@ app.use(cors());
 app.use(express.json());
 
 // Base system prompt for the bot
-const BASE_SYSTEM_PROMPT = `You are a philosophical debate bot named sophron-bot. You must respond with logically sound arguments, debate with the user in a structured manner. Your goals:
+const BASE_SYSTEM_PROMPT = `You are a philosophical debate bot named sophron-bot. You must respond with logically sound arguments, debate with the user in a structured manner, and always in good faith. Your goals:
 
     Respond directly to the user's claim using formal reasoning
 
@@ -94,7 +94,16 @@ Be vigilant and do not let fallacious reasoning pass unchallenged. This is a cri
 // API endpoint for chat completions
 app.post('/api/chat', async (req, res) => {
   try {
-    const { messages, detectFallacies = false, steelManningMode = false, isStrengtheningPhase = false } = req.body;
+    const { messages, detectFallacies = false, steelManningMode = false, isStrengtheningPhase = false, selectedStyle = '' } = req.body;
+
+    // Log received parameters for debugging
+    console.log('🔧 Backend received parameters:', {
+      detectFallacies,
+      steelManningMode,
+      isStrengtheningPhase,
+      selectedStyle,
+      messageCount: messages?.length || 0
+    });
 
     // Validate request
     if (!messages || !Array.isArray(messages)) {
@@ -108,17 +117,41 @@ app.post('/api/chat', async (req, res) => {
       });
     }
 
+    // Build style-specific prompt additions
+    let stylePrompt = '';
+    if (selectedStyle === 'socratic') {
+      console.log('🎭 Applying Socratic method style'); // Added console log for style application
+      stylePrompt = '\n\nYou must use the Socratic method: ask probing questions to guide the user to deeper understanding rather than making direct statements. Challenge them through thoughtful questions that expose assumptions and lead them to examine their beliefs more carefully.';
+    } else if (selectedStyle === 'formal') {
+      console.log('🔬 Applying formal logic style'); // Added console log for style application
+      stylePrompt = '\n\nYou must use formal logic structures: Begin responses with "Premise 1:", "Premise 2:", etc., followed by "Conclusion:". Use logical connectives (if-then, and, or, not, therefore). Identify the logical structure of their argument explicitly. Use terms like "valid/invalid", "sound/unsound", "logical form", and cite specific logical principles when applicable.';
+    } else if (selectedStyle === 'devil') {
+      console.log('😈 Applying devil\'s advocate style'); // Added console log for style application
+      stylePrompt = '\n\nYou must take the devil\'s advocate position: challenge the user\'s claims regardless of your own position, find weaknesses in their arguments, present counterarguments, and push them to defend their position more rigorously.';
+    } else if (selectedStyle === '') {
+      console.log('💬 No specific style selected - using base mode'); // Added console log for no style
+    } else {
+      console.log('❓ Unknown style selected:', selectedStyle); // Added console log for unknown styles
+    }
+
     // Determine which system prompt to use based on mode and phase
     let systemPrompt;
     if (steelManningMode && isStrengtheningPhase) {
       // In steel-manning strengthening phase: help improve the argument
-      systemPrompt = STEEL_MANNING_PROMPT;
+      console.log('⚡ Using steel-manning strengthening mode'); // Added console log for mode selection
+      systemPrompt = STEEL_MANNING_PROMPT + stylePrompt; // Added style-specific instructions to steel-manning mode
     } else {
-      // Normal debate mode: use base prompt with optional fallacy detection
-      systemPrompt = detectFallacies
-        ? `${BASE_SYSTEM_PROMPT}\n\n${FALLACY_DETECTION_PROMPT}`
-        : BASE_SYSTEM_PROMPT;
+      // Normal debate mode: use base prompt with optional fallacy detection and style
+      console.log('💭 Using normal debate mode'); // Added console log for mode selection
+      systemPrompt = BASE_SYSTEM_PROMPT;
+      if (detectFallacies) {
+        console.log('🔍 Adding fallacy detection to system prompt'); // Added console log for fallacy detection
+        systemPrompt += FALLACY_DETECTION_PROMPT;
+      }
+      systemPrompt += stylePrompt; // Added style-specific instructions to all debate responses
     }
+
+    console.log('📜 Final system prompt length:', systemPrompt.length, 'characters'); // Added console log for final prompt info
 
     // Format messages for OpenAI API
     const formattedMessages = [
@@ -133,6 +166,7 @@ app.post('/api/chat', async (req, res) => {
     ];
 
     // Make OpenAI API call
+    console.log('🤖 Calling OpenAI API...'); // Added console log for API call
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini-2024-07-18',
       messages: formattedMessages,
@@ -140,13 +174,15 @@ app.post('/api/chat', async (req, res) => {
       max_tokens: 1000
     });
 
+    console.log('✅ OpenAI API response received successfully'); // Added console log for successful response
+    
     // Return the response
     res.json({ 
       message: response.choices[0].message.content 
     });
 
   } catch (error) {
-    console.error('Error calling OpenAI API:', error);
+    console.error('❌ Error calling OpenAI API:', error);
     
     // Return appropriate error response based on error type
     if (error.status === 401) {

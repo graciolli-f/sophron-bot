@@ -51,13 +51,23 @@ function App() {
     // Set loading state
     setIsLoading(true);
     
+    // Log current settings being sent to API
+    console.log('📤 Sending message with settings:', {
+      selectedStyle,
+      detectFallacies,
+      steelManningMode,
+      isStrengtheningPhase,
+      messageCount: updatedMessages.length
+    });
+    
     try {
-      // Send message to OpenAI and get response, passing all relevant flags including steel-manning mode
+      // Send message to OpenAI and get response, passing all relevant flags including selected style
       const response = await sendMessageToOpenAI(
         updatedMessages, 
         detectFallacies, 
         steelManningMode, 
-        isStrengtheningPhase
+        isStrengtheningPhase,
+        selectedStyle
       );
       
       // Add bot response to the chat
@@ -96,22 +106,16 @@ function App() {
 
   // Handle selecting a debate style
   const handleStyleSelect = (style) => {
+    console.log('🎨 Style selected:', style);
     setSelectedStyle(style);
     
-    const styleMessages = {
-      'socratic': "Please use the Socratic method in our debate, asking questions to guide me to deeper understanding.",
-      'formal': "Please use formal logic structures and identify logical fallacies in our debate.",
-      'devil': "Please take the devil's advocate position in our debate, challenging my claims regardless of your own position."
-    };
-    
-    // If there's a style message and we have more than the initial message
-    if (styleMessages[style] && messages.length > 1) {
-      handleSendMessage(styleMessages[style]);
-    }
+    // Style will now be consistently applied to all AI responses through the system prompt
+    // No need to send a one-time message since the selectedStyle parameter is passed to every API call
   };
 
   // Handle fallacy detection toggle
   const handleFallacyToggle = (isEnabled) => {
+    console.log('🔍 Fallacy detection toggled:', isEnabled);
     setDetectFallacies(isEnabled);
     
     // If we're mid-conversation, notify the user of the change
@@ -129,6 +133,7 @@ function App() {
 
   // Handle steel-manning mode toggle - new feature
   const handleSteelManningToggle = (isEnabled) => {
+    console.log('⚡ Steel-manning mode toggled:', isEnabled);
     setSteelManningMode(isEnabled);
     
     // Reset strengthening phase when toggling steel-manning mode

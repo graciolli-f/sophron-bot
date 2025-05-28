@@ -26,7 +26,7 @@ const InputBar = ({ onSendMessage, isLoading }) => {
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
         placeholder="Type your philosophical claim here..."
-        className="input input-bordered w-full text-black"
+        className="input input-bordered w-full text-white/80"
         disabled={isLoading}
       />
       <button 
