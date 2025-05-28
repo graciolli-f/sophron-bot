@@ -51,15 +51,6 @@ function App() {
     // Set loading state
     setIsLoading(true);
     
-    // Log current settings being sent to API
-    console.log('📤 Sending message with settings:', {
-      selectedStyle,
-      detectFallacies,
-      steelManningMode,
-      isStrengtheningPhase,
-      messageCount: updatedMessages.length
-    });
-    
     try {
       // Send message to OpenAI and get response, passing all relevant flags including selected style
       const response = await sendMessageToOpenAI(
@@ -106,7 +97,6 @@ function App() {
 
   // Handle selecting a debate style
   const handleStyleSelect = (style) => {
-    console.log('🎨 Style selected:', style);
     setSelectedStyle(style);
     
     // Style will now be consistently applied to all AI responses through the system prompt
@@ -115,7 +105,6 @@ function App() {
 
   // Handle fallacy detection toggle
   const handleFallacyToggle = (isEnabled) => {
-    console.log('🔍 Fallacy detection toggled:', isEnabled);
     setDetectFallacies(isEnabled);
     
     // If we're mid-conversation, notify the user of the change
@@ -133,7 +122,6 @@ function App() {
 
   // Handle steel-manning mode toggle - new feature
   const handleSteelManningToggle = (isEnabled) => {
-    console.log('⚡ Steel-manning mode toggled:', isEnabled);
     setSteelManningMode(isEnabled);
     
     // Reset strengthening phase when toggling steel-manning mode

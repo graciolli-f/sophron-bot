@@ -5,14 +5,6 @@ export const getInitialMessage = () => {
 
 // Function to send a message to the backend API
 export const sendMessageToOpenAI = async (messages, detectFallacies = false, steelManningMode = false, isStrengtheningPhase = false, selectedStyle = '') => {
-  console.log('🌐 API call parameters:', {
-    detectFallacies,
-    steelManningMode,
-    isStrengtheningPhase,
-    selectedStyle,
-    messageCount: messages.length
-  });
-
   try {
     const response = await fetch('/api/chat', {
       method: 'POST',
@@ -34,7 +26,6 @@ export const sendMessageToOpenAI = async (messages, detectFallacies = false, ste
     }
 
     const data = await response.json();
-    console.log('📥 Received response from API');
     return data.message;
   } catch (error) {
     console.error('Error calling backend API:', error);
