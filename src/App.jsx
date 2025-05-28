@@ -25,6 +25,9 @@ function App() {
   // State to track if we're in the strengthening phase - new feature
   const [isStrengtheningPhase, setIsStrengtheningPhase] = useState(false);
 
+  // State for right sidebar visibility - new feature
+  const [isRightSidebarVisible, setIsRightSidebarVisible] = useState(true);
+
   // Initialize chat with bot greeting
   useEffect(() => {
     // Add initial bot message
@@ -141,6 +144,11 @@ function App() {
       ]);
     }
   };
+
+  // Handle right sidebar toggle - new feature
+  const handleRightSidebarToggle = () => {
+    setIsRightSidebarVisible(!isRightSidebarVisible);
+  };
   
   return (
     <div className="flex flex-1 h-screen bg-base-100">
@@ -159,10 +167,32 @@ function App() {
       <div className="flex-1 flex flex-col">
         {/* Header */}
         <header className="text-center py-6 px-8 border-b border-base-300">
-          <h1 className="text-3xl font-bold mb-2">sophron-bot</h1>
-          <p className="text-sm opacity-70">
-            Debate philosophical ideas with an AI trained in logical reasoning
-          </p>
+          <div className="flex items-center justify-between">
+            <div className="flex-1"></div>
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold mb-2">sophron-bot</h1>
+              <p className="text-sm opacity-70">
+                Debate philosophical ideas with an AI trained in logical reasoning
+              </p>
+            </div>
+            <div className="flex-1 flex justify-end">
+              <button
+                onClick={handleRightSidebarToggle}
+                className="btn btn-ghost btn-sm"
+                title={isRightSidebarVisible ? "Hide context sidebar" : "Show context sidebar"}
+              >
+                {isRightSidebarVisible ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                )}
+              </button>
+            </div>
+          </div>
         </header>
 
         {/* Chat Area - takes up remaining space */}
@@ -188,7 +218,7 @@ function App() {
       </div>
 
       {/* Right Sidebar - Context information and references */}
-      <RightSidebar />
+      {isRightSidebarVisible && <RightSidebar />}
     </div>
   );
 }
