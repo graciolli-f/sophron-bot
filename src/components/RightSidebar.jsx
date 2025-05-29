@@ -64,18 +64,13 @@ const RightSidebar = ({
           <div className="flex items-center gap-2 mb-4">
             <div className="w-3 h-3 rounded-full bg-error"></div>
             <h3 className="text-lg font-medium">Fallacy Detection</h3>
-            {detectedFallacies.length > 0 && (
-              <div className="animate-pulse">
-                <div className="w-2 h-2 rounded-full bg-error animate-ping"></div>
-              </div>
-            )}
           </div>
           
           {/* Fallacy Detection Status */}
           <div className={`p-3 rounded-lg border-2 mb-4 ${
             detectFallacies 
               ? detectedFallacies.length > 0 
-                ? 'border-error bg-error/10 text-error animate-pulse' 
+                ? 'border-error bg-error/10 text-error' 
                 : 'border-success bg-success/10 text-success'
               : 'border-base-300 bg-base-300/50'
           }`}>
@@ -83,7 +78,7 @@ const RightSidebar = ({
               <div className={`w-2 h-2 rounded-full ${
                 detectFallacies 
                   ? detectedFallacies.length > 0 
-                    ? 'bg-error animate-pulse' 
+                    ? 'bg-error' 
                     : 'bg-success'
                   : 'bg-base-content/30'
               }`}></div>
@@ -191,9 +186,6 @@ const RightSidebar = ({
           <div className="flex items-center gap-2 mb-4">
             <div className="w-3 h-3 rounded-full bg-info"></div>
             <h3 className="text-lg font-medium">Steel Manning</h3>
-            {steelManningSuggestions.length > 0 && (
-              <div className="w-2 h-2 rounded-full bg-info animate-pulse"></div>
-            )}
           </div>
           
           {/* Steel Manning Status */}
@@ -204,7 +196,7 @@ const RightSidebar = ({
           }`}>
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${
-                steelManningSuggestions.length > 0 ? 'bg-info animate-pulse' : 'bg-base-content/30'
+                steelManningSuggestions.length > 0 ? 'bg-info' : 'bg-base-content/30'
               }`}></div>
               <span className="text-sm font-medium">
                 {steelManningSuggestions.length > 0 
@@ -284,6 +276,14 @@ const RightSidebar = ({
                               <h5 className="font-medium text-xs mb-1">Why This Helps:</h5>
                               <p className="text-xs opacity-80">{suggestion.reason}</p>
                             </div>
+
+                            {/* AI's example */}
+                            {suggestion.example && (
+                              <div>
+                                <h5 className="font-medium text-xs mb-1">Example:</h5>
+                                <p className="text-xs opacity-80 italic bg-info/5 p-2 rounded border-l-2 border-info/30">{suggestion.example}</p>
+                              </div>
+                            )}
                           </div>
                         </div>
                       )}

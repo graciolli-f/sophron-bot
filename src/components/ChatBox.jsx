@@ -110,7 +110,7 @@ const ChatBox = ({ messages, onTermClick }) => {
               message.sender === 'user'
                 ? 'bg-primary text-primary-content'
                 : 'bg-base-300 text-base-content'
-            }`}
+            } ${message.isLoading ? 'animate-pulse' : ''}`}
           >
             {message.sender === 'bot' ? (
               <div className="prose prose-invert prose-sm max-w-none">

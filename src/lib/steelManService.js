@@ -47,6 +47,7 @@ export const formatImprovementsForDisplay = (improvements) => {
     category: improvement.category,
     suggestion: improvement.suggestion,
     reason: improvement.reason,
+    example: improvement.example,
     detectedAt: new Date()
   }));
 }; 

@@ -620,7 +620,8 @@ Return your response as a JSON object with the following structure:
     {
       "category": "Category Name",
       "suggestion": "Specific suggestion to strengthen the argument",
-      "reason": "Why this improvement would make the argument stronger"
+      "reason": "Why this improvement would make the argument stronger",
+      "example": "Here's how you could rewrite this part: '[specific example text]'"
     }
   ]
 }
@@ -633,6 +634,8 @@ Categories to consider:
 - Counterarguments: Address potential objections
 - Logic: Improve logical structure
 - Definitions: Define key terms more clearly
+
+For each suggestion, provide a concrete example showing exactly how the user could improve their specific argument. Use their actual words when possible and show the improved version.
 
 Focus on constructive improvements that would make the argument more persuasive and harder to refute. Only suggest meaningful improvements, not minor tweaks.`;
 

@@ -50,44 +50,12 @@ function App() {
 
   // Handle sending a new message
   const handleSendMessage = async (text) => {
-    // If steel-manning mode is enabled and this appears to be a new claim (not already in strengthening phase), start strengthening
-    if (steelManningMode && !isStrengtheningPhase && messages.length <= 1) {
+    // If steel-manning mode is enabled and this appears to be a new argument, start strengthening
+    if (steelManningMode && !isStrengtheningPhase) {
       setIsStrengtheningPhase(true);
     }
 
-    // Check for fallacies in user message BEFORE sending to chat (if fallacy detection is enabled)
-    if (detectFallacies) {
-      try {
-        const fallacyResult = await detectFallaciesAPI(text);
-        if (fallacyResult.hasFallacies && fallacyResult.fallacies.length > 0) {
-          const formattedFallacies = formatFallaciesForDisplay(fallacyResult.fallacies);
-          setDetectedFallacies(prev => [...prev, ...formattedFallacies]);
-          // Ensure sidebar is visible when fallacies are detected
-          setIsRightSidebarVisible(true);
-        }
-      } catch (error) {
-        console.error('Error detecting fallacies:', error);
-        // Continue with chat even if fallacy detection fails
-      }
-    }
-
-    // Check for steel manning improvements (if steel manning mode is enabled)
-    if (steelManningMode) {
-      try {
-        const steelManResult = await analyzeSteelManning(text);
-        if (steelManResult.hasImprovements && steelManResult.improvements.length > 0) {
-          const formattedImprovements = formatImprovementsForDisplay(steelManResult.improvements);
-          setSteelManningSuggestions(prev => [...prev, ...formattedImprovements]);
-          // Ensure sidebar is visible when improvements are suggested
-          setIsRightSidebarVisible(true);
-        }
-      } catch (error) {
-        console.error('Error analyzing steel manning:', error);
-        // Continue with chat even if steel manning analysis fails
-      }
-    }
-
-    // Add user message to the chat
+    // Add user message to the chat IMMEDIATELY for better UX
     const updatedMessages = [
       ...messages,
       { text, sender: 'user' }
@@ -96,10 +64,69 @@ function App() {
     
     // Set loading state
     setIsLoading(true);
-    
+
+    // Add loading message for analysis phase
+    const analysisLoadingMessage = { 
+      text: "🔍 Analyzing your argument...", 
+      sender: 'bot',
+      isLoading: true,
+      id: 'analysis-loading'
+    };
+    setMessages(prev => [...prev, analysisLoadingMessage]);
+
     try {
-      // Send message to OpenAI and get response, passing all relevant flags including selected style
-      // Note: We no longer pass detectFallacies to the chat API since fallacy detection is handled separately
+      // Run fallacy detection and steel manning analysis in parallel (if enabled)
+      const analysisPromises = [];
+      
+      if (detectFallacies) {
+        analysisPromises.push(
+          detectFallaciesAPI(text).then(fallacyResult => {
+            if (fallacyResult.hasFallacies && fallacyResult.fallacies.length > 0) {
+              const formattedFallacies = formatFallaciesForDisplay(fallacyResult.fallacies);
+              setDetectedFallacies(prev => [...prev, ...formattedFallacies]);
+              setIsRightSidebarVisible(true);
+            }
+          }).catch(error => {
+            console.error('Error detecting fallacies:', error);
+          })
+        );
+      }
+
+      if (steelManningMode) {
+        analysisPromises.push(
+          analyzeSteelManning(text).then(steelManResult => {
+            if (steelManResult.hasImprovements && steelManResult.improvements.length > 0) {
+              const formattedImprovements = formatImprovementsForDisplay(steelManResult.improvements);
+              setSteelManningSuggestions(prev => [...prev, ...formattedImprovements]);
+              setIsRightSidebarVisible(true);
+            }
+          }).catch(error => {
+            console.error('Error analyzing steel manning:', error);
+          })
+        );
+      }
+
+      // Wait for analysis to complete
+      await Promise.all(analysisPromises);
+
+      // If we're in steel-manning strengthening phase, don't send to main chat
+      // Just show the analysis in the sidebar and transition out of strengthening phase
+      if (steelManningMode && isStrengtheningPhase) {
+        // Remove loading message without adding a bot response
+        setMessages(prev => prev.filter(msg => msg.id !== 'analysis-loading'));
+        // Transition out of strengthening phase
+        setIsStrengtheningPhase(false);
+        return; // Exit early, don't call main chat API
+      }
+
+      // Update loading message to show response generation
+      setMessages(prev => prev.map(msg => 
+        msg.id === 'analysis-loading' 
+          ? { ...msg, text: "💭 Formulating response..." }
+          : msg
+      ));
+
+      // Send message to OpenAI and get response
       const response = await sendMessageToOpenAI(
         updatedMessages, 
         false, // Don't use fallacy detection in main chat anymore
@@ -109,25 +136,19 @@ function App() {
         isDebateMode
       );
       
-      // Add bot response to the chat
-      const newMessages = [
-        ...updatedMessages,
-        { text: response, sender: 'bot' }
-      ];
-      setMessages(newMessages);
+      // Remove loading message and add bot response
+      setMessages(prev => {
+        const withoutLoading = prev.filter(msg => msg.id !== 'analysis-loading');
+        return [...withoutLoading, { text: response, sender: 'bot' }];
+      });
 
-      // If we're in steel-manning mode and this was the strengthening phase, transition to debate mode
-      if (steelManningMode && isStrengtheningPhase) {
-        // The bot just provided strengthening suggestions, now we transition to debate mode
-        setIsStrengtheningPhase(false);
-      }
     } catch (error) {
       // Handle error and add error message to chat
       console.error(error);
-      setMessages([
-        ...updatedMessages,
-        { text: error.message, sender: 'bot' }
-      ]);
+      setMessages(prev => {
+        const withoutLoading = prev.filter(msg => msg.id !== 'analysis-loading');
+        return [...withoutLoading, { text: error.message, sender: 'bot' }];
+      });
     } finally {
       // Reset loading state
       setIsLoading(false);
@@ -136,10 +157,6 @@ function App() {
 
   // Handle selecting a predefined topic
   const handleTopicSelect = (topic) => {
-    // If steel-manning mode is enabled, start with the strengthening phase
-    if (steelManningMode) {
-      setIsStrengtheningPhase(true);
-    }
     handleSendMessage(topic);
   };
 
