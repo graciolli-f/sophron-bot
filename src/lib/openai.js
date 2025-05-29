@@ -1,10 +1,12 @@
 // Function to get initial greeting
-export const getInitialMessage = () => {
-  return "What belief or claim would you like to debate?";
+export const getInitialMessage = (isDebateMode = false) => {
+  return isDebateMode 
+    ? "What position would you like me to argue against? I'll automatically take the opposite stance and engage you in real debate."
+    : "What belief or claim would you like to debate?";
 };
 
 // Function to send a message to the backend API
-export const sendMessageToOpenAI = async (messages, detectFallacies = false, steelManningMode = false, isStrengtheningPhase = false, selectedStyle = '') => {
+export const sendMessageToOpenAI = async (messages, detectFallacies = false, steelManningMode = false, isStrengtheningPhase = false, selectedStyle = '', isDebateMode = false) => {
   try {
     const response = await fetch('/api/chat', {
       method: 'POST',
@@ -16,7 +18,8 @@ export const sendMessageToOpenAI = async (messages, detectFallacies = false, ste
         detectFallacies,
         steelManningMode,
         isStrengtheningPhase,
-        selectedStyle
+        selectedStyle,
+        isDebateMode
       })
     });
 

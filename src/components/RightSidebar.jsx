@@ -1,174 +1,315 @@
 import React, { useState } from 'react';
 
-// RightSidebar component for contextual information and reference material
-const RightSidebar = () => {
-  // State for selected context topic
-  const [selectedTopic, setSelectedTopic] = useState(null);
+// RightSidebar component now serves as both fallacy helper and steel manning assistant
+const RightSidebar = ({ 
+  detectFallacies = false,
+  detectedFallacies = [],
+  onClearFallacies = () => {},
+  onAddTestFallacy = () => {},
+  steelManningMode = false,
+  steelManningSuggestions = [],
+  onClearSteelManning = () => {}
+}) => {
+  // State for managing which fallacy is expanded for details
+  const [expandedFallacy, setExpandedFallacy] = useState(null);
+  // State for managing which steel manning suggestion is expanded
+  const [expandedSuggestion, setExpandedSuggestion] = useState(null);
 
-  // Sample contextual information - in a real app, this could be fetched dynamically
-  const contextualInfo = {
-    'free-will': {
-      title: 'Free Will',
-      definition: 'The ability to make choices that are genuinely your own, not predetermined by prior causes.',
-      keyPoints: [
-        'Hard determinism argues free will is an illusion',
-        'Libertarian free will suggests genuine choice exists',
-        'Compatibilism tries to reconcile free will with determinism'
-      ],
-      relatedConcepts: ['Determinism', 'Moral Responsibility', 'Causation']
-    },
-    'determinism': {
-      title: 'Determinism',
-      definition: 'The doctrine that all events, including human choices, are the inevitable result of prior causes.',
-      keyPoints: [
-        'Physical determinism: all events follow natural laws',
-        'Causal determinism: every event has a sufficient cause',
-        'Implications for moral responsibility and punishment'
-      ],
-      relatedConcepts: ['Free Will', 'Causation', 'Predictability']
-    },
-    'consciousness': {
-      title: 'Consciousness',
-      definition: 'The state of being aware of and able to think about one\'s existence, sensations, thoughts, and surroundings.',
-      keyPoints: [
-        'Hard problem: explaining subjective experience',
-        'Different theories: materialism, dualism, panpsychism',
-        'Questions about AI consciousness and qualia'
-      ],
-      relatedConcepts: ['Qualia', 'Mind-Body Problem', 'Artificial Intelligence']
-    }
+  // Function to clear all detected fallacies
+  const clearAllFallacies = () => {
+    onClearFallacies();
+    setExpandedFallacy(null); // Also clear any expanded fallacy
   };
 
-  // Recently discussed topics (could be populated from chat analysis)
-  const recentTopics = [
-    { id: 'free-will', name: 'Free Will', mentions: 3 },
-    { id: 'determinism', name: 'Determinism', mentions: 5 },
-    { id: 'consciousness', name: 'Consciousness', mentions: 1 }
-  ];
+  // Function to clear all steel manning suggestions
+  const clearAllSuggestions = () => {
+    onClearSteelManning();
+    setExpandedSuggestion(null); // Also clear any expanded suggestion
+  };
 
-  // Handle clicking on a topic for more details
-  const handleTopicClick = (topicId) => {
-    setSelectedTopic(topicId);
+  // Toggle fallacy details
+  const toggleFallacyDetails = (fallacyId) => {
+    setExpandedFallacy(expandedFallacy === fallacyId ? null : fallacyId);
+  };
+
+  // Toggle suggestion details
+  const toggleSuggestionDetails = (suggestionId) => {
+    setExpandedSuggestion(expandedSuggestion === suggestionId ? null : suggestionId);
+  };
+
+  // Format timestamp for fallacy detection
+  const formatTimestamp = (date) => {
+    return new Intl.DateTimeFormat('en-US', {
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date);
   };
 
   return (
-    <div className="w-64 bg-base-200 border-l border-base-300 h-screen overflow-y-auto p-6">
+    <div className="w-64 bg-base-200 border-l border-base-300 h-full overflow-y-auto flex-shrink-0 p-6">
       {/* Sidebar Header */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-2">Context & References</h2>
-        <p className="text-sm opacity-70">Explore concepts mentioned in your debate</p>
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-2">Argument Assistant</h2>
+        <p className="text-sm opacity-70">
+          {(detectFallacies || steelManningMode) 
+            ? "Analysis of your arguments will appear here"
+            : "Enable features in the left sidebar to use this assistant"
+          }
+        </p>
       </div>
 
-      {/* Recently Mentioned Topics */}
-      <div className="mb-8">
-        <h3 className="text-lg font-medium mb-4">Recent Topics</h3>
-        {recentTopics.length > 0 ? (
-          <div className="space-y-2">
-            {recentTopics.map((topic) => (
-              <button
-                key={topic.id}
-                onClick={() => handleTopicClick(topic.id)}
-                className="w-full text-left p-3 rounded-lg bg-base-300 hover:bg-base-100 transition-colors duration-150"
-              >
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">{topic.name}</span>
-                  <span className="text-xs opacity-60">{topic.mentions}x</span>
-                </div>
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div className="text-sm opacity-60 p-3 bg-base-300 rounded-lg">
-            Topics will appear here as you discuss them in your debate.
-          </div>
-        )}
-      </div>
-
-      {/* Selected Topic Details */}
-      {selectedTopic && contextualInfo[selectedTopic] && (
+      {/* FALLACY DETECTION SECTION */}
+      {detectFallacies && (
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium">Topic Details</h3>
-            <button
-              onClick={() => setSelectedTopic(null)}
-              className="btn btn-ghost btn-sm"
-            >
-              ✕
-            </button>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-3 h-3 rounded-full bg-error"></div>
+            <h3 className="text-lg font-medium">Fallacy Detection</h3>
+            {detectedFallacies.length > 0 && (
+              <div className="animate-pulse">
+                <div className="w-2 h-2 rounded-full bg-error animate-ping"></div>
+              </div>
+            )}
           </div>
           
-          <div className="bg-base-300 rounded-lg p-4 space-y-4">
-            <div>
-              <h4 className="font-semibold text-base mb-2">
-                {contextualInfo[selectedTopic].title}
-              </h4>
-              <p className="text-sm opacity-80 leading-relaxed">
-                {contextualInfo[selectedTopic].definition}
-              </p>
-            </div>
-
-            <div>
-              <h5 className="font-medium text-sm mb-2">Key Points:</h5>
-              <ul className="space-y-1">
-                {contextualInfo[selectedTopic].keyPoints.map((point, index) => (
-                  <li key={index} className="text-xs opacity-70 ml-3">
-                    • {point}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <h5 className="font-medium text-sm mb-2">Related Concepts:</h5>
-              <div className="flex flex-wrap gap-1">
-                {contextualInfo[selectedTopic].relatedConcepts.map((concept, index) => (
-                  <span
-                    key={index}
-                    className="badge badge-ghost badge-sm cursor-pointer hover:badge-primary"
-                    onClick={() => {
-                      const conceptId = concept.toLowerCase().replace(/\s+/g, '-');
-                      if (contextualInfo[conceptId]) {
-                        setSelectedTopic(conceptId);
-                      }
-                    }}
-                  >
-                    {concept}
-                  </span>
-                ))}
-              </div>
+          {/* Fallacy Detection Status */}
+          <div className={`p-3 rounded-lg border-2 mb-4 ${
+            detectFallacies 
+              ? detectedFallacies.length > 0 
+                ? 'border-error bg-error/10 text-error animate-pulse' 
+                : 'border-success bg-success/10 text-success'
+              : 'border-base-300 bg-base-300/50'
+          }`}>
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${
+                detectFallacies 
+                  ? detectedFallacies.length > 0 
+                    ? 'bg-error animate-pulse' 
+                    : 'bg-success'
+                  : 'bg-base-content/30'
+              }`}></div>
+              <span className="text-sm font-medium">
+                {detectedFallacies.length > 0 
+                  ? `${detectedFallacies.length} Fallac${detectedFallacies.length === 1 ? 'y' : 'ies'} Detected!`
+                  : 'No Fallacies Detected'
+                }
+              </span>
             </div>
           </div>
+
+          {/* No fallacies detected */}
+          {detectedFallacies.length === 0 && (
+            <div className="text-center py-6">
+              <div className="w-12 h-12 mx-auto mb-3 opacity-20">
+                <svg fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15l-4-4 1.41-1.41L11 14.17l6.59-6.59L19 9l-8 8z"/>
+                </svg>
+              </div>
+              <h4 className="text-sm font-medium mb-2 opacity-70">Clean Arguments!</h4>
+              <p className="text-xs opacity-50 leading-relaxed mb-3">
+                Your arguments are logically sound.
+              </p>
+              
+              {/* Test button */}
+              <button
+                onClick={() => onAddTestFallacy('Ad Hominem Test')}
+                className="btn btn-outline btn-xs"
+              >
+                Test System
+              </button>
+            </div>
+          )}
+
+          {/* Detected fallacies list */}
+          {detectedFallacies.length > 0 && (
+            <>
+              {/* Clear all button */}
+              <div className="mb-4">
+                <button
+                  onClick={clearAllFallacies}
+                  className="w-full btn btn-sm btn-ghost text-xs text-error hover:bg-error/10"
+                >
+                  Clear All ({detectedFallacies.length})
+                </button>
+              </div>
+
+              {/* Fallacies list */}
+              <div className="space-y-3">
+                {detectedFallacies.map((fallacy) => {
+                  const isExpanded = expandedFallacy === fallacy.id;
+
+                  return (
+                    <div key={fallacy.id} className="bg-error/10 border border-error/30 rounded-lg p-3 animate-in slide-in-from-right">
+                      {/* Fallacy header */}
+                      <button
+                        onClick={() => toggleFallacyDetails(fallacy.id)}
+                        className="w-full text-left flex items-center justify-between"
+                      >
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-sm capitalize text-error">{fallacy.name}</h4>
+                          <p className="text-xs opacity-60">{formatTimestamp(fallacy.detectedAt)}</p>
+                        </div>
+                        <svg
+                          className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+
+                      {/* Expanded details */}
+                      {isExpanded && (
+                        <div className="mt-3 pt-3 border-t border-error/20">
+                          <div className="space-y-3">
+                            {/* AI's explanation */}
+                            <div>
+                              <h5 className="font-medium text-xs mb-1">Why This Is a Fallacy:</h5>
+                              <p className="text-xs opacity-80">{fallacy.explanation}</p>
+                            </div>
+
+                            {/* AI's improvement suggestion */}
+                            <div>
+                              <h5 className="font-medium text-xs mb-1">How to Improve:</h5>
+                              <p className="text-xs opacity-80">{fallacy.suggestion}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
       )}
 
-      {/* Quick Reference Section */}
-      <div className="mb-8">
-        <h3 className="text-lg font-medium mb-4">Quick Reference</h3>
-        <div className="space-y-3">
-          <div className="bg-base-300 rounded-lg p-3">
-            <h4 className="font-medium text-sm mb-1">Logical Fallacies</h4>
-            <p className="text-xs opacity-60">Common reasoning errors to avoid</p>
+      {/* STEEL MANNING SECTION */}
+      {steelManningMode && (
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-3 h-3 rounded-full bg-info"></div>
+            <h3 className="text-lg font-medium">Steel Manning</h3>
+            {steelManningSuggestions.length > 0 && (
+              <div className="w-2 h-2 rounded-full bg-info animate-pulse"></div>
+            )}
           </div>
           
-          <div className="bg-base-300 rounded-lg p-3">
-            <h4 className="font-medium text-sm mb-1">Argument Structure</h4>
-            <p className="text-xs opacity-60">How to build strong arguments</p>
+          {/* Steel Manning Status */}
+          <div className={`p-3 rounded-lg border-2 mb-4 ${
+            steelManningSuggestions.length > 0 
+              ? 'border-info bg-info/10 text-info' 
+              : 'border-base-300 bg-base-300/50'
+          }`}>
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${
+                steelManningSuggestions.length > 0 ? 'bg-info animate-pulse' : 'bg-base-content/30'
+              }`}></div>
+              <span className="text-sm font-medium">
+                {steelManningSuggestions.length > 0 
+                  ? `${steelManningSuggestions.length} Improvement${steelManningSuggestions.length === 1 ? '' : 's'} Suggested`
+                  : 'No Improvements Suggested'
+                }
+              </span>
+            </div>
           </div>
-          
-          <div className="bg-base-300 rounded-lg p-3">
-            <h4 className="font-medium text-sm mb-1">Philosophical Schools</h4>
-            <p className="text-xs opacity-60">Major philosophical traditions</p>
-          </div>
-        </div>
-      </div>
 
-      {/* Debug Information (can be removed in production) */}
-      <div className="mt-auto pt-4 border-t border-base-300">
-        <div className="text-xs opacity-50">
-          <p>Context sidebar ready</p>
-          <p>Click topics to explore concepts</p>
+          {/* No suggestions */}
+          {steelManningSuggestions.length === 0 && (
+            <div className="text-center py-6">
+              <div className="w-12 h-12 mx-auto mb-3 opacity-20">
+                <svg fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+              </div>
+              <h4 className="text-sm font-medium mb-2 opacity-70">Strong Argument!</h4>
+              <p className="text-xs opacity-50 leading-relaxed">
+                Your argument appears to be well-constructed. Continue making your points!
+              </p>
+            </div>
+          )}
+
+          {/* Suggestions list */}
+          {steelManningSuggestions.length > 0 && (
+            <>
+              {/* Clear all button */}
+              <div className="mb-4">
+                <button
+                  onClick={clearAllSuggestions}
+                  className="w-full btn btn-sm btn-ghost text-xs text-info hover:bg-info/10"
+                >
+                  Clear All ({steelManningSuggestions.length})
+                </button>
+              </div>
+
+              {/* Suggestions list */}
+              <div className="space-y-3">
+                {steelManningSuggestions.map((suggestion) => {
+                  const isExpanded = expandedSuggestion === suggestion.id;
+
+                  return (
+                    <div key={suggestion.id} className="bg-info/10 border border-info/30 rounded-lg p-3 animate-in slide-in-from-left">
+                      {/* Suggestion header */}
+                      <button
+                        onClick={() => toggleSuggestionDetails(suggestion.id)}
+                        className="w-full text-left flex items-center justify-between"
+                      >
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-sm text-info">{suggestion.category}</h4>
+                          <p className="text-xs opacity-60">{formatTimestamp(suggestion.detectedAt)}</p>
+                        </div>
+                        <svg
+                          className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+
+                      {/* Expanded details */}
+                      {isExpanded && (
+                        <div className="mt-3 pt-3 border-t border-info/20">
+                          <div className="space-y-3">
+                            {/* AI's suggestion */}
+                            <div>
+                              <h5 className="font-medium text-xs mb-1">Suggestion:</h5>
+                              <p className="text-xs opacity-80">{suggestion.suggestion}</p>
+                            </div>
+
+                            {/* AI's reasoning */}
+                            <div>
+                              <h5 className="font-medium text-xs mb-1">Why This Helps:</h5>
+                              <p className="text-xs opacity-80">{suggestion.reason}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
-      </div>
+      )}
+
+      {/* No features enabled state */}
+      {!detectFallacies && !steelManningMode && (
+        <div className="flex-1 flex flex-col items-center justify-center text-center py-12">
+          <div className="w-16 h-16 mb-4 opacity-20">
+            <svg fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15l-4-4 1.41-1.41L11 14.17l6.59-6.59L19 9l-8 8z"/>
+            </svg>
+          </div>
+          <h3 className="text-sm font-medium mb-2 opacity-70">Assistant Ready</h3>
+          <p className="text-xs opacity-50 leading-relaxed">
+            Enable Fallacy Detection or Steel-manning Mode in the left sidebar to get real-time analysis of your arguments.
+          </p>
+        </div>
+      )}
     </div>
   );
 };

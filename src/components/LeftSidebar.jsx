@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 // LeftSidebar component for topic selection, debate styles, modes, and settings
 const LeftSidebar = ({ 
@@ -8,8 +8,13 @@ const LeftSidebar = ({
   detectFallacies, 
   onFallacyToggle, 
   steelManningMode, 
-  onSteelManningToggle 
+  onSteelManningToggle,
+  isDebateMode, 
+  onDebateModeToggle 
 }) => {
+  // State for controlling topics section visibility
+  const [isTopicsExpanded, setIsTopicsExpanded] = useState(false);
+
   // Predefined debate topics for quick selection
   const topics = [
     "Free will vs determinism",
@@ -17,7 +22,6 @@ const LeftSidebar = ({
     "Moral relativism vs absolutism",
     "The meaning of life",
     "AI consciousness and rights",
-    "The trolley problem",
     "Existence of objective truth",
     "The ethics of genetic engineering"
   ];
@@ -30,7 +34,7 @@ const LeftSidebar = ({
   ];
 
   return (
-    <div className="w-64 bg-base-200 border-r border-base-300 h-screen overflow-y-auto p-6">
+    <div className="w-64 bg-base-200 border-r border-base-300 h-full overflow-y-auto flex-shrink-0 p-6">
       {/* Sidebar Header */}
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-2">Debate Settings</h2>
@@ -39,18 +43,31 @@ const LeftSidebar = ({
 
       {/* Quick Topics Section */}
       <div className="mb-8">
-        <h3 className="text-lg font-medium mb-4">Quick Topics</h3>
-        <div className="space-y-2">
-          {topics.map((topic, index) => (
-            <button
-              key={index}
-              onClick={() => onTopicSelect(topic)}
-              className="w-full text-left p-3 rounded-lg bg-base-300 hover:bg-base-100 transition-colors duration-150 text-sm"
-            >
-              {topic}
-            </button>
-          ))}
+        {/* Add state for toggling topics section visibility */}
+        <div 
+          className="flex items-center justify-between cursor-pointer"
+          onClick={() => setIsTopicsExpanded(!isTopicsExpanded)}
+        >
+          <h3 className="text-lg font-medium">Quick Topics</h3>
+          <button className="btn btn-ghost btn-sm">
+            {isTopicsExpanded ? '▼' : '▶'}
+          </button>
         </div>
+        
+        {/* Only show topics when expanded */}
+        {isTopicsExpanded && (
+          <div className="space-y-2 mt-4">
+            {topics.map((topic, index) => (
+              <button
+                key={index}
+                onClick={() => onTopicSelect(topic)}
+                className="w-full text-left p-3 rounded-lg bg-base-300 hover:bg-base-100 transition-colors duration-150 text-sm"
+              >
+                {topic}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Debate Styles Section */}
@@ -78,10 +95,28 @@ const LeftSidebar = ({
         </div>
       </div>
 
-      {/* Debate Modes Section */}
+      {/* Modes Section */}
       <div className="mb-8">
-        <h3 className="text-lg font-medium mb-4">Debate Modes</h3>
+        <h3 className="text-lg font-medium mb-4">Modes</h3>
         <div className="space-y-4">
+          {/* Debate/Learn Mode Toggle */}
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-medium text-sm">
+                {isDebateMode ? 'Debate Mode' : 'Learn Mode'}
+              </div>
+              <div className="text-xs opacity-60">
+                {isDebateMode ? 'AI takes opposite position' : 'AI acts as educational partner'}
+              </div>
+            </div>
+            <input
+              type="checkbox"
+              checked={isDebateMode}
+              onChange={(e) => onDebateModeToggle(e.target.checked)}
+              className="toggle toggle-primary toggle-sm"
+            />
+          </div>
+
           {/* Fallacy Detection Toggle */}
           <div className="flex items-center justify-between">
             <div>
@@ -111,6 +146,8 @@ const LeftSidebar = ({
           </div>
         </div>
       </div>
+
+      
 
       {/* Additional Settings Section */}
       <div className="mb-8">

@@ -4,6 +4,8 @@ import InputBar from './components/InputBar';
 import LeftSidebar from './components/LeftSidebar';
 import RightSidebar from './components/RightSidebar';
 import { sendMessageToOpenAI, getInitialMessage } from './lib/openai';
+import { detectFallacies as detectFallaciesAPI, formatFallaciesForDisplay } from './lib/fallacyService';
+import { analyzeSteelManning, formatImprovementsForDisplay } from './lib/steelManService';
 import './index.css';
 
 function App() {
@@ -25,23 +27,64 @@ function App() {
   // State to track if we're in the strengthening phase - new feature
   const [isStrengtheningPhase, setIsStrengtheningPhase] = useState(false);
 
+  // State for debate mode toggle - if true, AI takes opposite position automatically
+  const [isDebateMode, setIsDebateMode] = useState(false);
+
   // State for right sidebar visibility - new feature
   const [isRightSidebarVisible, setIsRightSidebarVisible] = useState(true);
+
+  // State for detected logical fallacies - new helper functionality
+  const [detectedFallacies, setDetectedFallacies] = useState([]);
+
+  // State for steel manning suggestions - new helper functionality
+  const [steelManningSuggestions, setSteelManningSuggestions] = useState([]);
 
   // Initialize chat with bot greeting
   useEffect(() => {
     // Add initial bot message
     setMessages([{ 
-      text: getInitialMessage(), 
+      text: getInitialMessage(isDebateMode), 
       sender: 'bot' 
     }]);
-  }, []);
+  }, [isDebateMode]);
 
   // Handle sending a new message
   const handleSendMessage = async (text) => {
     // If steel-manning mode is enabled and this appears to be a new claim (not already in strengthening phase), start strengthening
     if (steelManningMode && !isStrengtheningPhase && messages.length <= 1) {
       setIsStrengtheningPhase(true);
+    }
+
+    // Check for fallacies in user message BEFORE sending to chat (if fallacy detection is enabled)
+    if (detectFallacies) {
+      try {
+        const fallacyResult = await detectFallaciesAPI(text);
+        if (fallacyResult.hasFallacies && fallacyResult.fallacies.length > 0) {
+          const formattedFallacies = formatFallaciesForDisplay(fallacyResult.fallacies);
+          setDetectedFallacies(prev => [...prev, ...formattedFallacies]);
+          // Ensure sidebar is visible when fallacies are detected
+          setIsRightSidebarVisible(true);
+        }
+      } catch (error) {
+        console.error('Error detecting fallacies:', error);
+        // Continue with chat even if fallacy detection fails
+      }
+    }
+
+    // Check for steel manning improvements (if steel manning mode is enabled)
+    if (steelManningMode) {
+      try {
+        const steelManResult = await analyzeSteelManning(text);
+        if (steelManResult.hasImprovements && steelManResult.improvements.length > 0) {
+          const formattedImprovements = formatImprovementsForDisplay(steelManResult.improvements);
+          setSteelManningSuggestions(prev => [...prev, ...formattedImprovements]);
+          // Ensure sidebar is visible when improvements are suggested
+          setIsRightSidebarVisible(true);
+        }
+      } catch (error) {
+        console.error('Error analyzing steel manning:', error);
+        // Continue with chat even if steel manning analysis fails
+      }
     }
 
     // Add user message to the chat
@@ -56,12 +99,14 @@ function App() {
     
     try {
       // Send message to OpenAI and get response, passing all relevant flags including selected style
+      // Note: We no longer pass detectFallacies to the chat API since fallacy detection is handled separately
       const response = await sendMessageToOpenAI(
         updatedMessages, 
-        detectFallacies, 
+        false, // Don't use fallacy detection in main chat anymore
         steelManningMode, 
         isStrengtheningPhase,
-        selectedStyle
+        selectedStyle,
+        isDebateMode
       );
       
       // Add bot response to the chat
@@ -113,8 +158,8 @@ function App() {
     // If we're mid-conversation, notify the user of the change
     if (messages.length > 1) {
       const notificationMessage = isEnabled 
-        ? "Fallacy detection is now enabled. I will interrupt to point out logical fallacies in your arguments."
-        : "Fallacy detection is now disabled. I will not interrupt to point out logical fallacies.";
+        ? "Fallacy detection is now enabled. Your messages will be analyzed for logical fallacies and displayed in the sidebar."
+        : "Fallacy detection is now disabled. Your messages will not be analyzed for logical fallacies.";
       
       setMessages([
         ...messages,
@@ -149,9 +194,51 @@ function App() {
   const handleRightSidebarToggle = () => {
     setIsRightSidebarVisible(!isRightSidebarVisible);
   };
+
+  // Handle debate mode toggle - new feature
+  const handleDebateModeToggle = (isEnabled) => {
+    setIsDebateMode(isEnabled);
+    
+    // If we're mid-conversation, notify the user of the change
+    if (messages.length > 1) {
+      const notificationMessage = isEnabled 
+        ? "Debate mode is now enabled. I will automatically take the opposite position to your arguments."
+        : "Learn mode is now enabled. I will act as your educational debate partner.";
+      
+      setMessages([
+        ...messages,
+        { text: notificationMessage, sender: 'bot' }
+      ]);
+    }
+  };
+
+  // Handle clearing detected fallacies - new helper functionality
+  const handleClearFallacies = () => {
+    setDetectedFallacies([]);
+  };
+
+  // Handle clearing steel manning suggestions - new helper functionality
+  const handleClearSteelManning = () => {
+    setSteelManningSuggestions([]);
+  };
+
+  // Function to manually add a fallacy for testing purposes
+  const addTestFallacy = (fallacyName = 'Test Fallacy') => {
+    const testFallacy = {
+      id: `fallacy-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      name: fallacyName,
+      detectedAt: new Date(),
+      context: 'This is a test fallacy added manually to verify the system works.',
+      explanation: 'This fallacy was added for testing purposes.',
+      suggestion: 'This is just a test - you can clear it using the Clear All button.'
+    };
+    
+    setDetectedFallacies(prev => [...prev, testFallacy]);
+    setIsRightSidebarVisible(true);
+  };
   
   return (
-    <div className="flex flex-1 h-screen bg-base-100">
+    <div className="flex h-screen bg-base-100 overflow-hidden">
       {/* Left Sidebar - Topic selection, debate styles, modes, and settings */}
       <LeftSidebar 
         onTopicSelect={handleTopicSelect} 
@@ -161,12 +248,14 @@ function App() {
         onFallacyToggle={handleFallacyToggle}
         steelManningMode={steelManningMode}
         onSteelManningToggle={handleSteelManningToggle}
+        isDebateMode={isDebateMode}
+        onDebateModeToggle={handleDebateModeToggle}
       />
       
       {/* Main Content Area - Chat interface */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="text-center py-6 px-8 border-b border-base-300">
+        <header className="text-center py-6 px-8 border-b border-base-300 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex-1"></div>
             <div className="flex-1">
@@ -175,11 +264,11 @@ function App() {
                 Debate philosophical ideas with an AI trained in logical reasoning
               </p>
             </div>
-            <div className="flex-1 flex justify-end">
+            <div className="flex-1 flex justify-end items-center space-x-2">
               <button
                 onClick={handleRightSidebarToggle}
                 className="btn btn-ghost btn-sm"
-                title={isRightSidebarVisible ? "Hide context sidebar" : "Show context sidebar"}
+                title={isRightSidebarVisible ? "Hide fallacy helper" : "Show fallacy helper"}
               >
                 {isRightSidebarVisible ? (
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -196,29 +285,43 @@ function App() {
         </header>
 
         {/* Chat Area - takes up remaining space */}
-        <div className="flex-1 flex flex-col p-6">
+        <div className="flex-1 flex flex-col p-6 min-h-0">
           {/* Chat messages */}
-          <div className="flex-1 mb-4">
-            <ChatBox messages={messages} />
+          <div className="flex-1 mb-4 min-h-0">
+            <ChatBox 
+              messages={messages} 
+            />
           </div>
           
           {/* Input field */}
-          <InputBar 
-            onSendMessage={handleSendMessage} 
-            isLoading={isLoading} 
-          />
+          <div className="flex-shrink-0">
+            <InputBar 
+              onSendMessage={handleSendMessage} 
+              isLoading={isLoading} 
+            />
+          </div>
         </div>
 
         {/* Footer */}
-        <footer className="text-center py-4 px-8 border-t border-base-300">
+        <footer className="text-center py-4 px-8 border-t border-base-300 flex-shrink-0">
           <p className="text-xs opacity-50">
-            Powered by OpenAI gpt-4o-mini-2024-07-18
+            Powered by OpenAI gpt-4o-mini-2024-07-18 • Enhanced with Wikipedia & SEP
           </p>
         </footer>
       </div>
 
       {/* Right Sidebar - Context information and references */}
-      {isRightSidebarVisible && <RightSidebar />}
+      {isRightSidebarVisible && (
+        <RightSidebar 
+          detectFallacies={detectFallacies}
+          detectedFallacies={detectedFallacies}
+          onClearFallacies={handleClearFallacies}
+          onAddTestFallacy={addTestFallacy}
+          steelManningMode={steelManningMode}
+          steelManningSuggestions={steelManningSuggestions}
+          onClearSteelManning={handleClearSteelManning}
+        />
+      )}
     </div>
   );
 }
