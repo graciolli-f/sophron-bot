@@ -1,5 +1,8 @@
 // Service for detecting logical fallacies in user messages
 
+// API base URL configuration - uses environment variable for deployed backend
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
 /**
  * Analyzes a user message for logical fallacies using the backend API
  * @param {string} userMessage - The message to analyze
@@ -7,7 +10,7 @@
  */
 export const detectFallacies = async (userMessage) => {
   try {
-    const response = await fetch('/api/detect-fallacies', {
+    const response = await fetch(`${API_BASE}/api/detect-fallacies`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

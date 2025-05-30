@@ -1,3 +1,8 @@
+// OpenAI API service for the sophron-bot chat interface
+
+// API base URL configuration - uses environment variable for deployed backend
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
 // Function to get initial greeting
 export const getInitialMessage = (isDebateMode = false) => {
   return isDebateMode 
@@ -8,7 +13,7 @@ export const getInitialMessage = (isDebateMode = false) => {
 // Function to send a message to the backend API
 export const sendMessageToOpenAI = async (messages, detectFallacies = false, steelManningMode = false, isStrengtheningPhase = false, selectedStyle = '', isDebateMode = false) => {
   try {
-    const response = await fetch('/api/chat', {
+    const response = await fetch(`${API_BASE}/api/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

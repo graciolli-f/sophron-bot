@@ -1,5 +1,8 @@
 // Service for steel manning user arguments
 
+// API base URL configuration - uses environment variable for deployed backend
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
 /**
  * Analyzes a user message for potential improvements using steel manning
  * @param {string} userMessage - The message to analyze
@@ -7,7 +10,7 @@
  */
 export const analyzeSteelManning = async (userMessage) => {
   try {
-    const response = await fetch('/api/steel-man', {
+    const response = await fetch(`${API_BASE}/api/steel-man`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
