@@ -1,5 +1,7 @@
 # sophron-bot
 
+[Demo Here](https://sophron-bot.netlify.app/)
+
 A philosophical debate bot powered by OpenAI that engages users in structured logical arguments. sophron-bot helps users develop critical thinking skills through rigorous debate and argument analysis.
 
 ## Features
