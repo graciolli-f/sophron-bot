@@ -1,7 +1,8 @@
 // OpenAI API service for the sophron-bot chat interface
 
 // API base URL configuration - uses environment variable for deployed backend
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_BASE = import.meta.env.VITE_API_URL || 
+  (import.meta.env.MODE === 'production' ? '' : 'http://localhost:3001');
 
 // Function to get initial greeting
 export const getInitialMessage = (isDebateMode = false) => {

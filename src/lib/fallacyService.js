@@ -1,7 +1,8 @@
 // Service for detecting logical fallacies in user messages
 
 // API base URL configuration - uses environment variable for deployed backend
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_BASE = import.meta.env.VITE_API_URL || 
+  (import.meta.env.MODE === 'production' ? '' : 'http://localhost:3001');
 
 /**
  * Analyzes a user message for logical fallacies using the backend API

@@ -1,5 +1,6 @@
 // Content service for fetching philosophical information from various APIs
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_BASE = import.meta.env.VITE_API_URL || 
+  (import.meta.env.MODE === 'production' ? '' : 'http://localhost:3001');
 
 // Fetch content from Wikipedia API
 export const fetchWikipediaContent = async (term) => {
